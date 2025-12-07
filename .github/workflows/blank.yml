@@ -1,0 +1,23 @@
+name: Deploy my It website
+on:
+  push:
+    branches: [ master ]
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: action/checkout@v2
+      - name: Deploy my It website
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOSTNAME: ${{ secrets.EC2_HOST }}
+          USER_NAME: ${{ secrets.EC2_USER }}
+        run: |
+          cat << 'EOF' > private_key
+          ${{ secrets.EC2_SSH_KEY }}
+          EOF
+          chmod 600 privaye_key
+          scp -o StrictHostKeyChecking=no -i private_key index.html ${USER_NAME}@${HOSTNAME}:/tmp/
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} "sudo dnf install httpd -y"
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} "sudo systemctl enable --now httpd"
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} "sudo mv /tmp/index.html /var/www/html/index.html"
